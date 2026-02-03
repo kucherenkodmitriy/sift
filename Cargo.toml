@@ -1,0 +1,31 @@
+[package]
+name = "sonic_php"
+version = "0.1.0"
+edition = "2021"
+authors = ["Dmytro"]
+description = "SIMD-accelerated JSON parsing for PHP via sonic-rs"
+license = "MIT"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+# PHP bindings
+ext-php-rs = { version = "0.13", features = ["anyhow"] }
+
+# SIMD JSON engine
+sonic-rs = "0.3"
+faststr = "0.2"
+
+# Error handling
+anyhow = "1.0"
+thiserror = "2.0"
+
+# Logging
+log = "0.4"
+env_logger = "0.11"
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
