@@ -47,6 +47,19 @@ cargo php install --release
 php -m | grep sonic
 ```
 
+### Composer (for IDE Support)
+
+After installing the extension, add Composer support for IDE autocompletion:
+
+```bash
+composer require dmytrokucher/sift
+```
+
+This provides stub files for the `Sonic`, `Sift`, and `Query` classes, enabling full IDE autocompletion and type hints.
+
+**Note**: Composer does not install the extension itself - you must build and install it first using one of the methods above.
+
+
 ## API Reference
 
 ### Legacy API (Sonic class)

@@ -1,0 +1,52 @@
+{
+    "name": "dmytrokucher/sift",
+    "description": "SIMD-accelerated JSON parsing for PHP via sonic-rs. Features lazy parsing, chainable Query API, and memory-efficient zero-copy parsing.",
+    "type": "library",
+    "keywords": [
+        "json",
+        "parser",
+        "simd",
+        "performance",
+        "sonic",
+        "lazy-parsing",
+        "php-extension",
+        "json-pointer",
+        "rfc6901"
+    ],
+    "license": "MIT",
+    "homepage": "https://github.com/dmytrokucher/sift",
+    "readme": "README.md",
+    "authors": [
+        {
+            "name": "Dmytro Kucherenko",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": "^8.1"
+    },
+    "suggest": {
+        "ext-sonic": "Required for actual functionality. This package only provides IDE stubs."
+    },
+    "autoload": {
+        "files": [
+            "stubs/Sonic.php",
+            "stubs/Sift.php",
+            "stubs/Query.php"
+        ]
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "Sift\\Tests\\": "tests/php/"
+        }
+    },
+    "config": {
+        "sort-packages": true
+    },
+    "support": {
+        "issues": "https://github.com/dmytrokucher/sift/issues",
+        "source": "https://github.com/dmytrokucher/sift"
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

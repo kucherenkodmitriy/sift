@@ -13,9 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Sonic::decode()` - High-speed full JSON parsing
 - `Sonic::isValid()` - SIMD-accelerated JSON validation
 - `Sift::query()` - Lazy Query API with chainable navigation
+- Query API methods: `pointer()`, `get()`, `index()`, `string()`, `int()`, `float()`, `bool()`, `value()`, `raw()`, `isNull()`, `isArray()`, `isObject()`, `getType()`
 - Docker development environment
 - Benchmark suite for performance comparison
-- PHP test suite
+- Comprehensive PHP test suite (86 tests covering all APIs)
+- **Composer package support** (`dmytrokucher/sift`) with IDE stubs for autocompletion
+- IDE stub files for `Sonic`, `Sift`, and `Sift\Query` classes with full PHPDoc
 
 ### Security
 - **Input size validation**: 64 MB maximum to prevent memory exhaustion attacks
