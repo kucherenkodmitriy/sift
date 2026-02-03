@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<package packagerversion="1.10.13" version="2.0" xmlns="http://pear.php.net/dtd/package-2.0" xmlns:tasks="http://pear.php.net/dtd/tasks-1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://pear.php.net/dtd/tasks-1.0 http://pear.php.net/dtd/tasks-1.0.xsd http://pear.php.net/dtd/package-2.0 http://pear.php.net/dtd/package-2.0.xsd">
+ <name>sift</name>
+ <channel>pecl.php.net</channel>
+ <summary>SIMD-accelerated JSON parsing for PHP</summary>
+ <description>Sift (sonic-php) provides SIMD-accelerated JSON parsing for PHP via sonic-rs. Features include lazy parsing for extracting specific values from massive JSON documents without full DOM construction, a chainable Query API, memory-efficient zero-copy parsing, and comprehensive security hardening with input size limits, depth limits, and overflow protection.</description>
+ <lead>
+  <name>Dmytro</name>
+  <user>dmytro</user>
+  <email>dmytro@example.com</email>
+  <active>yes</active>
+ </lead>
+ <date>2026-02-03</date>
+ <time>18:25:00</time>
+ <version>
+  <release>0.1.0</release>
+  <api>0.1.0</api>
+ </version>
+ <stability>
+  <release>beta</release>
+  <api>beta</api>
+ </stability>
+ <license uri="https://opensource.org/licenses/MIT">MIT</license>
+ <notes>
+Initial beta release of Sift (sonic-php)
+
+Features:
+- Sonic::get() - Lazy JSON pointer extraction without full decode
+- Sonic::decode() - High-speed full JSON parsing
+- Sonic::isValid() - SIMD-accelerated JSON validation
+- Sift::query() - Lazy Query API with chainable navigation
+
+Security:
+- Input size validation: 64 MB maximum to prevent memory exhaustion attacks
+- Nesting depth limits: 512 levels maximum to prevent stack overflow
+- Pointer segment limits: 256 segments maximum to prevent DoS via long paths
+- Integer overflow protection: Large u64 values safely convert to float
+- Negative index validation: Array indices must be non-negative
+- Error message sanitization: Prevents information leakage
+
+Technical:
+- Integration with sonic-rs for SIMD JSON parsing
+- ext-php-rs bindings for PHP 8.x
+- Zero-copy string handling where possible
+- Arc-based JSON sharing in Query API for efficient memory usage
+ </notes>
+ <contents>
+  <dir name="/">
+   <file name="LICENSE" role="doc" />
+   <file name="README.md" role="doc" />
+   <file name="CONTRIBUTING.md" role="doc" />
+   <file name="Cargo.toml" role="src" />
+   <file name="Makefile" role="src" />
+   <dir name="src">
+    <file name="lib.rs" role="src" />
+    <file name="parser.rs" role="src" />
+    <file name="query.rs" role="src" />
+    <file name="errors.rs" role="src" />
+   </dir>
+   <dir name="docs">
+    <file name="ARCHITECTURE.md" role="doc" />
+    <file name="BENCHMARKS.md" role="doc" />
+    <file name="CHANGELOG.md" role="doc" />
+   </dir>
+   <dir name="tests">
+    <dir name="php">
+     <file name="SonicTest.php" role="test" />
+     <file name="SiftTest.php" role="test" />
+    </dir>
+   </dir>
+   <dir name="benchmarks">
+    <file name="cold_start.php" role="test" />
+    <file name="lazy_get.php" role="test" />
+    <file name="memory.php" role="test" />
+    <file name="generate_data.php" role="test" />
+   </dir>
+  </dir>
+ </contents>
+ <dependencies>
+  <required>
+   <php>
+    <min>8.1.0</min>
+   </php>
+   <pearinstaller>
+    <min>1.10.0</min>
+   </pearinstaller>
+  </required>
+ </dependencies>
+ <providesextension>sonic</providesextension>
+ <extsrcrelease>
+  <configureoption default="autodetect" name="enable-sonic" prompt="Enable Sift (sonic-php) support" />
+ </extsrcrelease>
+ <changelog>
+  <release>
+   <version>
+    <release>0.1.0</release>
+    <api>0.1.0</api>
+   </version>
+   <stability>
+    <release>beta</release>
+    <api>beta</api>
+   </stability>
+   <date>2026-02-03</date>
+   <license uri="https://opensource.org/licenses/MIT">MIT</license>
+   <notes>
+Initial beta release
+   </notes>
+  </release>
+ </changelog>
+</package>

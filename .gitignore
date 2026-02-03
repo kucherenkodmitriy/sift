@@ -1,1 +1,27 @@
+# Rust build artifacts
 /target
+Cargo.lock
+
+# PHP extension binaries
+*.so
+*.dylib
+*.dll
+
+# IDE and editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+
+# PHP
+vendor/
+composer.lock
+
+# Docker
+.docker/volumes/
+
+# Test artifacts
+*.log
+.phpunit.result.cache
