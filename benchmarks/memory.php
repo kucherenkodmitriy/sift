@@ -3,9 +3,13 @@
 declare(strict_types=1);
 
 /**
- * Memory Usage Benchmark
+ * Enhanced Memory Usage Benchmark
  *
- * Compares peak memory usage between different JSON parsing approaches.
+ * Measures BOTH:
+ * 1. PHP heap memory (memory_get_usage) - Shows PHP array allocation savings
+ * 2. Process RSS (Resident Set Size) - Shows total memory including Rust allocations
+ *
+ * This gives the complete picture of memory usage across the PHP/Rust boundary.
  */
 
 if (!class_exists('Sonic')) {
@@ -20,6 +24,30 @@ function formatBytes(int $bytes): string {
         $i++;
     }
     return sprintf("%.2f %s", $bytes, $units[$i]);
+}
+
+/**
+ * Get process RSS (Resident Set Size) in bytes.
+ * This includes ALL memory: PHP heap + Rust allocations + everything else.
+ */
+function getProcessRSS(): int {
+    // Try /proc/self/status (Linux, works in Docker)
+    if (file_exists('/proc/self/status')) {
+        $status = file_get_contents('/proc/self/status');
+        if (preg_match('/VmRSS:\s+(\d+)\s+kB/', $status, $matches)) {
+            return (int)$matches[1] * 1024; // Convert KB to bytes
+        }
+    }
+    
+    // Fallback: getrusage (cross-platform, but less accurate)
+    $rusage = getrusage();
+    if (isset($rusage['ru_maxrss'])) {
+        // On Linux: KB, on macOS: bytes
+        $maxrss = $rusage['ru_maxrss'];
+        return PHP_OS_FAMILY === 'Darwin' ? $maxrss : $maxrss * 1024;
+    }
+    
+    return 0;
 }
 
 // Generate large JSON
@@ -38,51 +66,108 @@ for ($i = 0; $i < $userCount; $i++) {
 $json = json_encode($data);
 $jsonSize = strlen($json);
 
-echo "Memory Usage Benchmark\n";
-echo str_repeat("=", 60) . "\n";
-printf("JSON size: %s (%d users)\n\n", formatBytes($jsonSize), $userCount);
+echo "Enhanced Memory Usage Benchmark\n";
+echo str_repeat("=", 70) . "\n";
+printf("JSON size: %s (%d users)\n", formatBytes($jsonSize), $userCount);
+echo "Measuring: PHP heap + Process RSS (total memory)\n\n";
+
+// Baseline measurement
+gc_collect_cycles();
+sleep(1); // Let system stabilize
+$baselineRSS = getProcessRSS();
 
 // Test 1: Full json_decode
-gc_collect_cycles();
-$memBefore = memory_get_usage(true);
-$decoded = json_decode($json, true);
-$memAfter = memory_get_peak_usage(true);
-$jsonDecodeMemory = $memAfter - $memBefore;
-unset($decoded);
+echo "Test 1: json_decode() - Full Parse\n";
+echo str_repeat("-", 70) . "\n";
 
-echo "Full Decode Memory Usage:\n";
-echo str_repeat("-", 60) . "\n";
-printf("  json_decode:   %s\n", formatBytes($jsonDecodeMemory));
+gc_collect_cycles();
+$phpBefore = memory_get_usage(true);
+$rssBefore = getProcessRSS();
+
+$decoded = json_decode($json, true);
+
+$phpAfter = memory_get_peak_usage(true);
+$rssAfter = getProcessRSS();
+
+$jsonDecodePhp = $phpAfter - $phpBefore;
+$jsonDecodeRss = $rssAfter - $rssBefore;
+
+printf("  PHP heap:    %s\n", formatBytes($jsonDecodePhp));
+printf("  Process RSS: %s\n", formatBytes($jsonDecodeRss));
+unset($decoded);
 
 // Test 2: Full Sonic::decode
+echo "\nTest 2: Sonic::decode() - Full Parse\n";
+echo str_repeat("-", 70) . "\n";
+
 gc_collect_cycles();
-$memBefore = memory_get_usage(true);
+$phpBefore = memory_get_usage(true);
+$rssBefore = getProcessRSS();
+
 $decoded = Sonic::decode($json);
-$memAfter = memory_get_peak_usage(true);
-$sonicDecodeMemory = $memAfter - $memBefore;
+
+$phpAfter = memory_get_peak_usage(true);
+$rssAfter = getProcessRSS();
+
+$sonicDecodePhp = $phpAfter - $phpBefore;
+$sonicDecodeRss = $rssAfter - $rssBefore;
+
+printf("  PHP heap:    %s\n", formatBytes($sonicDecodePhp));
+printf("  Process RSS: %s\n", formatBytes($sonicDecodeRss));
 unset($decoded);
 
-printf("  Sonic::decode: %s\n\n", formatBytes($sonicDecodeMemory));
+// Test 3: Lazy get (should use minimal memory on both metrics)
+echo "\nTest 3: Sonic::get() - Lazy Extraction\n";
+echo str_repeat("-", 70) . "\n";
 
-// Test 3: Lazy get (should use minimal memory)
 gc_collect_cycles();
-$memBefore = memory_get_usage(true);
+$phpBefore = memory_get_usage(true);
+$rssBefore = getProcessRSS();
+
 $email = Sonic::get($json, '/users/25000/email');
-$memAfter = memory_get_peak_usage(true);
-$lazyGetMemory = $memAfter - $memBefore;
 
-echo "Lazy Extraction Memory Usage:\n";
-echo str_repeat("-", 60) . "\n";
-printf("  Sonic::get:    %s\n", formatBytes($lazyGetMemory));
-printf("  Value found:   %s\n\n", $email);
+$phpAfter = memory_get_peak_usage(true);
+$rssAfter = getProcessRSS();
 
-echo "Memory Savings with Lazy Parsing:\n";
-echo str_repeat("-", 60) . "\n";
-if ($jsonDecodeMemory > 0) {
-    printf("  vs json_decode:   %.1f%% reduction\n",
-        (1 - $lazyGetMemory / $jsonDecodeMemory) * 100);
+$lazyGetPhp = $phpAfter - $phpBefore;
+$lazyGetRss = $rssAfter - $rssBefore;
+
+printf("  PHP heap:    %s\n", formatBytes($lazyGetPhp));
+printf("  Process RSS: %s\n", formatBytes($lazyGetRss));
+printf("  Value found: %s\n", $email);
+
+// Summary
+echo "\n" . str_repeat("=", 70) . "\n";
+echo "Memory Savings with Lazy Parsing (Sonic::get)\n";
+echo str_repeat("=", 70) . "\n";
+
+echo "\nPHP Heap Savings:\n";
+if ($jsonDecodePhp > 0) {
+    printf("  vs json_decode:   %s saved (%.1f%% reduction)\n",
+        formatBytes($jsonDecodePhp - $lazyGetPhp),
+        (1 - $lazyGetPhp / $jsonDecodePhp) * 100);
 }
-if ($sonicDecodeMemory > 0) {
-    printf("  vs Sonic::decode: %.1f%% reduction\n",
-        (1 - $lazyGetMemory / $sonicDecodeMemory) * 100);
+if ($sonicDecodePhp > 0) {
+    printf("  vs Sonic::decode: %s saved (%.1f%% reduction)\n",
+        formatBytes($sonicDecodePhp - $lazyGetPhp),
+        (1 - $lazyGetPhp / $sonicDecodePhp) * 100);
 }
+
+echo "\nTotal Process Memory Savings (including Rust):\n";
+if ($jsonDecodeRss > 0) {
+    printf("  vs json_decode:   %s saved (%.1f%% reduction)\n",
+        formatBytes($jsonDecodeRss - $lazyGetRss),
+        (1 - $lazyGetRss / $jsonDecodeRss) * 100);
+}
+if ($sonicDecodeRss > 0) {
+    printf("  vs Sonic::decode: %s saved (%.1f%% reduction)\n",
+        formatBytes($sonicDecodeRss - $lazyGetRss),
+        (1 - $lazyGetRss / $sonicDecodeRss) * 100);
+}
+
+echo "\n" . str_repeat("=", 70) . "\n";
+echo "Explanation:\n";
+echo "  • PHP heap:    Memory tracked by PHP (arrays, strings, objects)\n";
+echo "  • Process RSS: Total memory including Rust allocations\n";
+echo "  • Lazy parsing avoids creating PHP arrays AND Rust DOM structures\n";
+echo str_repeat("=", 70) . "\n";
