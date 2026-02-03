@@ -241,6 +241,15 @@ See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for details on:
 - Security measures and limits
 - Error handling across the FFI boundary
 
+## Acknowledgements
+
+This project builds on excellent open-source libraries:
+
+- [sonic-rs](https://github.com/cloudwego/sonic-rs) - The SIMD-accelerated JSON engine (Apache-2.0)
+- [ext-php-rs](https://github.com/davidcole1340/ext-php-rs) - PHP/Rust bindings (MIT/Apache-2.0)
+
+See [NOTICE](NOTICE) file for full attribution.
+
 ## License
 
 MIT License - see LICENSE file for details.
